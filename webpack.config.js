@@ -2,7 +2,7 @@ const path = require('path');
 
 module.exports = {
 
-  entry: path.resolve(__dirname, 'src', 'index.ts'),
+  entry: path.resolve(__dirname, 'src', 'Index.ts'),
 
   output: {
     path: path.resolve(__dirname, 'lib'),
