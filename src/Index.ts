@@ -1,1 +1,2 @@
-export { runWhile } from './WhileInvariant';
+export { observeUntil } from './effects/ObserveUntil';
+export { observeWhile } from './effects/ObserveWhile';

@@ -4,6 +4,7 @@
     "declaration": true,    
     "sourceMap": true,    
     "strict": true,
+    "moduleResolution": "node",
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitReturns": true
