@@ -1,9 +1,10 @@
 {
   "compilerOptions": {
     "target": "es6",
-    "declaration": true,    
-    "sourceMap": true,    
+    "declaration": true,
+    "sourceMap": true,
     "strict": true,
+    "strictNullChecks": true,
     "moduleResolution": "node",
     "noUnusedLocals": true,
     "noUnusedParameters": true,
