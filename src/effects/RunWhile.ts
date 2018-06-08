@@ -1,9 +1,12 @@
-import { RunWhileMonad, OnViolationMonad } from './RunWhile';
 import { call, CallEffect, race, RaceEffect, select, SelectEffect } from 'redux-saga/effects';
 
 import { observeWhile } from './ObserveWhile';
 
-export type RunWhileMonad<S, I extends string> = {
+export type RunWhileMonad<S> = {
+  saga: (saga: () => IterableIterator<any>) => SagaMonad<S>;
+};
+
+export type SagaMonad<S> = {
   /**
    * Actually starts running the saga.
    */
@@ -14,7 +17,7 @@ export type RunWhileMonad<S, I extends string> = {
    * You may not use '@@Saga' or a tag on another invariant call.
    * @param tag
    */
-  invariant: <NewI extends string>(tag: NewI, clause: (s: S) => boolean) => RunWhileMonad<S, I | NewI>,
+  invariant: <NewI extends string>(tag: NewI, clause: (s: S) => boolean) => InvariantMonad<S, NewI>,
 };
 
 export type InvariantMonad<S, I extends string> = {
@@ -23,7 +26,7 @@ export type InvariantMonad<S, I extends string> = {
    * You may not use '@@Saga' or a tag on another invariant call.
    * @param tag
    */
-  invariant: <NewI extends string>(tag: NewI, clause: (s: S) => boolean) => RunWhileMonad<S, I | NewI>,
+  invariant: <NewI extends string>(tag: NewI, clause: (s: S) => boolean) => InvariantMonad<S, I | NewI>,
 
   /**
    * Add a callback that gets called if any of the invariants get violated. These are called in the order they're added
@@ -31,7 +34,7 @@ export type InvariantMonad<S, I extends string> = {
    * @param callback the saga to be redux-called when an invariant gets violated. Callback receives the current redux
    *   state and an array of all the invariants violated.
    */
-  onViolation: (callback: (state: S, violations: I[]) => IterableIterator<any>) => RunWhileMonad<S, I>
+  onViolation: (callback: (state: S, violations: I[]) => IterableIterator<any>) => OnViolationMonad<S, I>
 };
 
 export type OnViolationMonad<S, I extends string> = {
@@ -46,9 +49,8 @@ export type OnViolationMonad<S, I extends string> = {
    * @param callback the saga to be redux-called when an invariant gets violated. Callback receives the current redux
    *   state and an array of all the invariants violated.
    */
-  onViolation: (callback: (state: S, violations: I[]) => IterableIterator<any>) => RunWhileMonad<S, I>
+  onViolation: (callback: (state: S, violations: I[]) => IterableIterator<any>) => OnViolationMonad<S, I>
 };
-
 
 type Invariant<S, I extends string> = {
   tag: I,
@@ -57,7 +59,7 @@ type Invariant<S, I extends string> = {
 
 type RunWhileDefinition<S, I extends string> = {
   invariants: Invariant<S, I>[],
-  onViolationCallbacks: ((s: S, tag: I) => IterableIterator<any>)[],
+  onViolationCallbacks: ((s: S, tag: I[]) => IterableIterator<any>)[],
   saga: () => IterableIterator<any>
 };
 
@@ -67,11 +69,22 @@ const sagaRaceTag = '@@Saga';
  * Constructs a runWhile guard on the passed saga. The saga will only run while all .invariant declarations are true.
  * @param saga The saga to guard.
  */
-export function runWhile<S>(saga: () => IterableIterator<any>): RunWhileMonad<S, never> {
+export function runWhile<S>(): RunWhileMonad<S> {
   const definition: RunWhileDefinition<S, never> = {
-    saga: saga,
+    saga: function* nothing() { yield 0; },
     invariants: [],
     onViolationCallbacks: []
+  };
+
+  return {
+    saga: saga.bind(definition)
+  };
+}
+
+function saga<S>(this: RunWhileDefinition<S, never>, saga: () => IterableIterator<any>): SagaMonad<S> {
+  const definition = {
+    ...this,
+    saga
   };
 
   return {
@@ -147,7 +160,7 @@ function* runInternal<S, I extends string>(
   const raceResults = yield race(raceDefinition);
 
   // If an invariant was violated, call each onViolation with the set of violations
-  if(this.invariants.some(invariant => !!raceResults[invariant.tag])) {
+  if(this.invariants.some(invariant => invariant.tag in raceResults)) {
     const currentState: S = yield select(state => state);
 
     const violations = this.invariants
