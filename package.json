@@ -21,13 +21,14 @@
     "karma-jasmine": "1.1.2",
     "karma-webpack": "3.0.0",
     "redux": "3.5.0",
-    "redux-saga": "0.14.0",
+    "redux-saga": "0.16.0",
+    "redux-saga-test-plan": "3.7.0",
     "ts-loader": "4.3.1",
     "webpack": "4.11.1",
     "webpack-command": "0.2.1"
   },
   "peerDependencies": {
     "redux": ">=3.5.0",
-    "redux-saga": ">=0.14.0"
+    "redux-saga": ">=0.16.0"
   }
 }
