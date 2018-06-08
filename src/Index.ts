@@ -1,3 +1,3 @@
 export { observeUntil } from './effects/ObserveUntil';
 export { observeWhile } from './effects/ObserveWhile';
-export {  }
+export { runWhile } from './effects/RunWhile';

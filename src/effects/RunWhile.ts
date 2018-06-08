@@ -31,7 +31,7 @@ export type InvariantMonad<S, I extends string> = {
    * @param callback the saga to be redux-called when an invariant gets violated. Callback receives the current redux
    *   state and an array of all the invariants violated.
    */
-  onViolation: <NewI extends I>(callback: (state: S, violations: I[]) => IterableIterator<any>) => RunWhileMonad<S, I>
+  onViolation: (callback: (state: S, violations: I[]) => IterableIterator<any>) => RunWhileMonad<S, I>
 };
 
 export type OnViolationMonad<S, I extends string> = {
@@ -46,7 +46,7 @@ export type OnViolationMonad<S, I extends string> = {
    * @param callback the saga to be redux-called when an invariant gets violated. Callback receives the current redux
    *   state and an array of all the invariants violated.
    */
-  onViolation: <NewI extends I>(callback: (state: S, violations: I[]) => IterableIterator<any>) => RunWhileMonad<S, I>
+  onViolation: (callback: (state: S, violations: I[]) => IterableIterator<any>) => RunWhileMonad<S, I>
 };
 
 
@@ -76,12 +76,12 @@ export function runWhile<S>(saga: () => IterableIterator<any>): RunWhileMonad<S,
 
   return {
     run: run.bind(definition),
-    invariant: run.bind(definition)
+    invariant: invariant.bind(definition)
   };
 }
 
 function invariant<S, I extends string, NewI extends string>(
-  this: RunWhileDefinition<S, I>,
+  this: RunWhileDefinition<S, I | NewI>,
   tag: NewI, clause: (s: S) => boolean
 ): InvariantMonad<S, I | NewI> {
   if (tag === sagaRaceTag) {
@@ -140,7 +140,7 @@ function* runInternal<S, I extends string>(
   this.invariants.forEach(invariant => {
     raceDefinition = {
       ...raceDefinition,
-      [invariant.tag]: call(observeWhile, invariant.clause)
+      [invariant.tag as string]: call(observeWhile, invariant.clause)
     }
   });
 
