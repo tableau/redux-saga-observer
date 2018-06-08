@@ -5,6 +5,7 @@
   "main": "index.js",
   "typings": "src/index.d.ts",
   "scripts": {
+    "setup": "yarn install",
     "test": "karma start --single-run start test/karma.conf.js",
     "build": "webpack --config webpack.config.js"
   },

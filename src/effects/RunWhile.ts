@@ -77,7 +77,7 @@ export function runWhile<S>(): RunWhileMonad<S> {
   };
 
   return {
-    saga: saga.bind(definition)
+    saga: saga.bind(definition) // Can probably accomplish this with partial application rather than abusing 'this'.
   };
 }
 
