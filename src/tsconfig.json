@@ -1,15 +1,17 @@
 {
   "compilerOptions": {
     "target": "es6",
+    "declaration": true,
     "sourceMap": true,
     "strict": true,
     "strictNullChecks": true,
     "moduleResolution": "node",
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noImplicitReturns": true
+    "noImplicitReturns": true,
+    "declarationDir": "types"
   },
   "files": [
-    "Types.d.ts"
+    "index.ts"
   ]
 }

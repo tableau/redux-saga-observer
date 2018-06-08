@@ -13,9 +13,7 @@ module.exports = function (config) {
 
     // list of files / patterns to load in the browser
     files: [
-      './lib/compiled-locales/messages.en_US.js',
-      './test/*.ts',
-      './test/*.tsx',
+      'src/*.ts',
     ],
 
     mime: {
@@ -29,8 +27,7 @@ module.exports = function (config) {
     // preprocess matching files before serving them to the browser
     // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
     preprocessors: {
-      './test/*.ts': ['webpack'],
-      './test/*.tsx': ['webpack'],
+      'src/*.ts': ['webpack'],
     },
 
     webpack: {
