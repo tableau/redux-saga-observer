@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "sourceMap": true,
+    "strict": true,
+    "strictNullChecks": true,
+    "moduleResolution": "node",
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true
+  },
+  "files": [
+    "src/index.ts"
+  ]
+}

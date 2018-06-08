@@ -69,10 +69,7 @@ module.exports = {
           });
         }
       });
-    },
-    new CopyPkgJsonPlugin({
-        remove: ['devDependencies', 'scripts']
-    })
+    }
   ]
-};
 
+};
