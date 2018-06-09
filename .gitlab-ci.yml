@@ -1,3 +1,5 @@
+image: beneaththeink/node-xvfb
+
 init:
   - npm run setup
 
