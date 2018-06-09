@@ -1,9 +1,9 @@
 setup:
-    - npm run setup
+  - npm run setup
 
 test:
-    - npm run test
+  - npm run test
 
 stages:
-    - setup
-    - test
+  - setup
+  - test
