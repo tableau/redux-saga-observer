@@ -8,6 +8,10 @@ redux-saga-observer is a library that provides observer patterns to redux-sagas 
     * [Dispatching on state change](#dispatching-on-state-change)
     * [Managing concurrency](#managing-concurrency)
 * [Get Started](#get-started)
+    * [Requirements](#requirements)
+    * [Installation](#installation)
+* [Contributions](#contributions)
+
 # Why redux-saga-observer?
 
 [redux-saga](https://github.com/redux-saga/redux-saga) is a powerful set of abstractions for managing asynchronous side effects in redux applications. However, a number of things are either difficult or obtuse in the base library. In particular:
@@ -190,5 +194,11 @@ immediately aborts when ANY invariant is violated and you get notified of EVERY 
 * redux 3.5.0 or later
 * redux-saga 0.16.0 or later
 
-## installation
+## Installation
 Add redux-saga-observer as a dependency in your package.json.
+
+# Contributions
+Code contributions and improvements by the community are welcomed!
+See the LICENSE file for current open-source licensing and use information.
+
+Before we can accept pull requests from contributors, we require a signed [Contributor License Agreement (CLA)](http://tableau.github.io/contributing.html),
