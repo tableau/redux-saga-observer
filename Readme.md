@@ -7,7 +7,7 @@ redux-saga-observer is a library that provides observer patterns to redux-sagas 
 * [Why redux-saga-observer?]()
     * [Dispatching on state change](#dispatching-on-state-change)
     * [Managing concurrency](#managing-concurrency)
-
+* [Get Started](#get-started)
 # Why redux-saga-observer?
 
 [redux-saga](https://github.com/redux-saga/redux-saga) is a powerful set of abstractions for managing asynchronous side effects in redux applications. However, a number of things are either difficult or obtuse in the base library. In particular:
@@ -19,7 +19,7 @@ Observers help us out in both cases.
 
 ## Dispatching on state change
 
-There may be any number of actions that trigger reducers that operate on some section of your redux store. Suppose you have a checklist backed up in the cloud. Your redux store and the actions that update it look like:
+There may be any number of actions that trigger reducers that operate on some section of your redux store. Suppose you have a checklist backed up in the cloud. Your redux store and the actions that update it look like (in Typescript):
 
 ```
 type State = {
@@ -78,7 +78,7 @@ type SaveAction = {
     readonly lines: [],
 }
 
-function\* saveList(payload: SaveAction) {
+function* saveList(payload: SaveAction) {
     yield call(
         fetch, 
         { 
@@ -92,7 +92,7 @@ function\* saveList(payload: SaveAction) {
     );
 }
 
-function\* handleSaveList(payload: SaveAction) {
+function* handleSaveList(payload: SaveAction) {
     yield takeEvery('SAVE_LIST', saveList);
 }
 
@@ -110,7 +110,7 @@ Another pain point is managing concurrency in a saga. Consider the following cha
 
 ```
 
-function\* saveList(payload: SaveAction) {
+function* saveList(payload: SaveAction) {
     yield call(
         fetch, 
         { 
@@ -151,9 +151,9 @@ takeLatest can sometimes aleviate all the state checks, but in complex systems t
 
 ```
 
-function\* saveList(payload: SaveAction) {
+function* saveList(payload: SaveAction) {
     yield runWhile<State>()
-        .saga(function\* () {
+        .saga(function* () {
             yield call(
                 fetch, 
                 { 
@@ -183,3 +183,12 @@ function\* saveList(payload: SaveAction) {
 
 In the above example, we magically get nice types for violations in our onViolation callback ('NAME_UNCHANGED' | 'LINES_UNCHANGED')[] and state contains the state at the time the invariant was violated. The main saga
 immediately aborts when ANY invariant is violated and you get notified of EVERY broken invariant.
+
+# Get started
+
+## Requirements:
+* redux 3.5.0 or later
+* redux-saga 0.16.0 or later
+
+## installation
+Add redux-saga-observer as a dependency in your package.json.
