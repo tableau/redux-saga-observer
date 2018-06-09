@@ -1,9 +1,9 @@
-setup:
+init:
   - npm run setup
 
 test:
   - npm run test
 
 stages:
-  - setup
+  - init
   - test
