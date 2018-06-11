@@ -1,11 +1,13 @@
 image: beneaththeink/node-xvfb
 
-init:
-  - npm run setup
-
-test:
-  - npm run test
-
 stages:
-  - init
   - test
+
+job1:
+  stage: test
+  script:
+    - npm run setup
+    - npm run test
+  only:
+    - branches
+
