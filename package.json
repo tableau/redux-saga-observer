@@ -6,7 +6,8 @@
   "typings": "src/index.d.ts",
   "scripts": {
     "setup": "yarn install",
-    "test": "karma start --single-run start test/karma.conf.js",
+    "test": "karma start test/karma.conf.js --single-run",
+    "testWatch": "karma start test/karma.conf.js --no-single-run",
     "build": "webpack --config webpack.config.js"
   },
   "author": "",
