@@ -122,4 +122,41 @@ describe('observeAndRun', () => {
       .catch(error => fail(error))
       .then(_ => done());
   });
+
+  it('Exceptions propagate as expected', (done) => {
+    let caught = false;
+
+    function* saga() {
+      try {
+        yield observeAndRun<State>()
+          .saga(function* (): IterableIterator<never> {
+            throw new Error('horse')
+          })
+          .when(_ => true)
+          .until(state => state.val > 5)
+          .run();
+      } catch (e) {
+        caught = true
+      }
+    }
+
+    const initialState = {
+      val: 0
+    };
+
+    expectSaga(saga)
+      .withReducer(reducer, initialState)
+      .dispatch({type: 'increment'})
+      .dispatch({type: 'increment'})
+      .dispatch({type: 'increment'})
+      .dispatch({type: 'increment'})
+      .dispatch({type: 'increment'})
+      .dispatch({type: 'increment'})
+      .run(false)
+      .then(_ => {
+        expect(caught).toBe(true);
+      })
+      .catch(error => fail(error))
+      .then(_ => done());
+  });
 });
