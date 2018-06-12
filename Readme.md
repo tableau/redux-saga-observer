@@ -106,7 +106,37 @@ sagaMiddleware.run(handleSaveList);
 
 If we want to save after every change, the producer of SaveAction needs to know that REMOVE_LINE, INIT, and ADD_LINE are all the possible actions that can modify the document. Alternatively, you could change takeEvery to listen to these three actions, in which case it must track all the actions that can possibly modify your document. Either quickly becomes unwieldy as actions distribute across your app; all developers need to remember to update the list of actions anytime they add a new action for manipulating the doc. Observers let you monitor state and dispatch a Saga when when the document changes regardless of the action that triggered it.
 
-TODO: Add an actual top-level observer.
+In redux-saga-observer, you can add a top level observer using observeAndRun. The above example's missing goo for translating document actions into SAVE_LIST becomes the following:
+
+```
+
+function* autoSave() {
+    yield observeAndRun<State>()
+        .saga(function* (state) {
+            yield call(
+                fetch, 
+                { 
+                    method: 'POST',
+                    path: '/api/list',
+                    data: JSON.stringify({
+                        name: state.name,
+                        lines: state.lines
+                    })
+                }
+            );
+        })
+        .when((oldState, newState) => {
+            return oldState.name !== newState.name ||
+                oldState.lines !== newState.lines;
+        })
+        .run();
+}
+
+sagaMiddleware.run(autoSave);
+
+```
+
+We now save the do whenever the name or lines change in the document regardless of the action that triggered it.
 
 ## Managing concurrency
 
