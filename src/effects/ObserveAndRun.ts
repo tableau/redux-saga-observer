@@ -17,23 +17,30 @@ export type ObserveAndRunSagaMonad<S> = {
   when: (condition: (oldState: S, newState: S) => boolean) => ObserveAndRunWhenMonad<S>;
 };
 
+export type ObserveAndRunUntilMonad = {
+  run: () => CallEffect;
+};
+
 export type ObserveAndRunWhenMonad<S> = {
+  until: (callback: (state: S) => boolean) => ObserveAndRunUntilMonad;
   run: () => CallEffect;
 };
 
 type RunWhenDefinition<S> = {
   saga: (state: S) => IterableIterator<any>,
   condition: (oldState: S, newState: S) => boolean;
+  until: (state: S) => boolean;
 };
 
 /**
  * Runs a saga every time the when criteria is satisfied.
  */
-export function observeAndRun() {
+export function observeAndRun<S>() {
   return {
-    saga: sagaPartial({
+    saga: sagaPartial<S>({
       saga: function*() { yield null; },
-      condition: function() { return false; }
+      condition: function() { return false; },
+      until: _ => false
     })
   };
 }
@@ -41,7 +48,7 @@ export function observeAndRun() {
 function sagaPartial<S>(definition: RunWhenDefinition<S>) {
   return function(saga: () => IterableIterator<any>): ObserveAndRunSagaMonad<S> {
     return {
-      when: whenPartial({
+      when: whenPartial<S>({
         ...definition,
         saga
       })
@@ -51,13 +58,27 @@ function sagaPartial<S>(definition: RunWhenDefinition<S>) {
 
 function whenPartial<S>(definition: RunWhenDefinition<S>) {
   return function(condition: (oldState: S, newState: S) => boolean): ObserveAndRunWhenMonad<S> {
+    const newDefinition = {
+      ...definition,
+      condition
+    };
+
     return {
-      run: runPartial({
-        ...definition,
-        condition
-      })
+      run: runPartial<S>(newDefinition),
+      until: untilPartial<S>(newDefinition)
     };
   }
+}
+
+function untilPartial<S>(definition: RunWhenDefinition<S>) {
+  return function(until: (state: S) => boolean) {
+    return {
+      run: runPartial<S>({
+        ...definition,
+        until
+      })
+    };
+  };
 }
 
 function runPartial<S>(definition: RunWhenDefinition<S>) {
@@ -66,11 +87,15 @@ function runPartial<S>(definition: RunWhenDefinition<S>) {
   };
 }
 
-function* runInternal<S>(definition: RunWhenDefinition<S>) {
+function* runInternal<S>(definition: RunWhenDefinition<S>): IterableIterator<ForkEffect | SelectEffect | TakeEffect> {
   let previousState: S = yield select(state => state);
 
   while(true) {
     const currentState: S = yield select(state => state);
+
+    if (definition.until(currentState)) {
+      return;
+    }
 
     if (
       currentState != previousState &&
