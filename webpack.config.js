@@ -1,4 +1,5 @@
 const path = require('path');
+const CopyPkgJsonPlugin = require('copy-pkg-json-webpack-plugin');
 
 module.exports = {
 
