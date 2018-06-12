@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Contains redux sagas that operate on state change rather than actions",
   "main": "index.js",
-  "typings": "src/index.d.ts",
+  "typings": "src/types/index.d.ts",
   "scripts": {
     "setup": "yarn install",
     "test": "karma start test/karma.conf.js --single-run",

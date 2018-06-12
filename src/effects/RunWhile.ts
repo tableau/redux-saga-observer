@@ -3,6 +3,10 @@ import { call, CallEffect, race, RaceEffect, select, SelectEffect } from 'redux-
 import { observeWhile } from './ObserveWhile';
 
 export type RunWhileMonad<S> = {
+  /**
+   * The saga run when .run() is called.
+   * @param saga The saga to run.
+   */
   saga: (saga: () => IterableIterator<any>) => RunWhileSagaMonad<S>;
 };
 
