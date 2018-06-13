@@ -16,7 +16,7 @@ redux-saga-observer is a library that provides observer patterns to redux-sagas 
 
 [redux-saga](https://github.com/redux-saga/redux-saga) is a powerful set of abstractions for managing asynchronous side effects in redux applications. However, a number of things are either difficult or obtuse in the base library. In particular:
 
-* Sometimes you want to so things when the state changes rather than worry about why it changed.
+* Sometimes you want to do things when the state changes rather than worry about why it changed.
 * Handling concurrency that may update the redux store in ways your sagas must handle.
 
 Observers help us out in both cases.
