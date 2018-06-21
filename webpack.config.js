@@ -3,6 +3,8 @@ const CopyPkgJsonPlugin = require('copy-pkg-json-webpack-plugin');
 
 module.exports = {
 
+  mode: 'development',
+
   entry: path.resolve(__dirname, 'src', 'Index.ts'),
 
   output: {
