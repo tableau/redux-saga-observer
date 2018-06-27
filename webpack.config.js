@@ -39,9 +39,7 @@ module.exports = {
         use: {
           loader: 'ts-loader',
           options: {
-            compilerOptions: {
-              outDir: '.',
-            }
+            configFile: './tsconfig.json'
           }
         }
       },

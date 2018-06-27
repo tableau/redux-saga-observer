@@ -1,4 +1,4 @@
-import { call, CallEffect } from 'redux-saga/effects';
+import { CallEffect } from 'redux-saga/effects';
 
 import { observeUntil } from './ObserveUntil';
 
@@ -7,5 +7,5 @@ import { observeUntil } from './ObserveUntil';
  * @param invariant The condition on the Redux state to check.
  */
 export function* observeWhile<S>(invariant: (state: S) => boolean): IterableIterator<CallEffect> {
-  yield call(observeUntil, (state: S) => !invariant(state));
+  yield observeUntil((state: S) => !invariant(state));
 }
