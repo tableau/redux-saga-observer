@@ -9,7 +9,8 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitReturns": true,
-    "outDir": "."
+    "outDir": ".",
+    "moduleResolution": "node"
   },
   "files": [
     "src/index.ts"
