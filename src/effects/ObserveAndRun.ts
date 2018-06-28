@@ -1,4 +1,6 @@
 import {
+  actionChannel,
+  ActionChannelEffect,
   call,
   CallEffect,
   fork,
@@ -87,8 +89,10 @@ function runPartial<S>(definition: RunWhenDefinition<S>) {
   };
 }
 
-function* runInternal<S>(definition: RunWhenDefinition<S>): IterableIterator<ForkEffect | SelectEffect | TakeEffect> {
+function* runInternal<S>(definition: RunWhenDefinition<S>): IterableIterator<ActionChannelEffect | ForkEffect | SelectEffect | TakeEffect> {
   let previousState: S = yield select(state => state);
+
+  const channel = yield actionChannel('*');
 
   while(true) {
     const currentState: S = yield select(state => state);
@@ -106,7 +110,7 @@ function* runInternal<S>(definition: RunWhenDefinition<S>): IterableIterator<For
 
     previousState = currentState;
 
-    yield take('*');
+    yield take(channel);
   }
 }
 
