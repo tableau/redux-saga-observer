@@ -1,3 +1,4 @@
+import { Action } from 'redux';
 import { buffers } from 'redux-saga';
 import {
   actionChannel,
@@ -96,7 +97,7 @@ function* runInternal<S>(definition: RunWhenDefinition<S>): IterableIterator<Act
   // We need to observe every action to guarantee the observer will detect all state changes.
   // This means we have to eventually process actions even while other sagas are blocked; hence
   // the channel.
-  const channel = yield actionChannel('*', buffers.exapanding(100));
+  const channel = yield actionChannel('*', buffers.expanding<Action>(100));
 
   while(true) {
     const currentState: S = yield select(state => state);

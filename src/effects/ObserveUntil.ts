@@ -1,3 +1,4 @@
+import { Action } from 'redux';
 import { buffers } from 'redux-saga';
 import {
   actionChannel,
@@ -23,7 +24,7 @@ function* observeUntilInternal<S>(invariant: (state: S) => boolean): IterableIte
     return;
   }
 
-  const channel = yield actionChannel('*', buffers.expanding(100));
+  const channel = yield actionChannel('*', buffers.expanding<Action>(100));
 
   do {
     yield take(channel);
