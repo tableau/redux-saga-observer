@@ -1,6 +1,6 @@
 {
   "name": "redux-saga-observer",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Contains redux sagas that operate on state change rather than actions",
   "main": "index.js",
   "typings": "src/types/index.d.ts",
