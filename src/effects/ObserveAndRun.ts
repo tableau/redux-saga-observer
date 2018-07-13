@@ -13,46 +13,100 @@ import {
   TakeEffect
 } from 'redux-saga/effects';
 
-export type ObserveAndRunMonad<S> = {
-  saga: (saga: (state: S) => IterableIterator<any>) => ObserveAndRunSagaMonad<S>;
+export type ObserveAndRunMonad<StateType> = {
+  args: <SagaArgType>(callback: (oldState: StateType, newState: StateType) => SagaArgType) => ObserveAndRunArgsMonad<StateType, SagaArgType>;
+  saga: (saga: () => IterableIterator<any>) => ObserveAndRunSagaMonad<StateType>;
 };
 
-export type ObserveAndRunSagaMonad<S> = {
-  when: (condition: (oldState: S, newState: S) => boolean) => ObserveAndRunWhenMonad<S>;
+export type ObserveAndRunArgsMonad<StateType, SagaArgType> = {
+  saga: (saga: (arg: SagaArgType) => IterableIterator<any>) => ObserveAndRunSagaMonad<StateType>;
+}
+
+export type ObserveAndRunSagaMonad<StateType> = {
+  when: (condition: (oldState: StateType, newState: StateType) => boolean) => ObserveAndRunWhenMonad<StateType>;
 };
 
 export type ObserveAndRunUntilMonad = {
   run: () => CallEffect;
 };
 
-export type ObserveAndRunWhenMonad<S> = {
-  until: (callback: (state: S) => boolean) => ObserveAndRunUntilMonad;
+export type ObserveAndRunWhenMonad<StateType> = {
+  until: (callback: (state: StateType) => boolean) => ObserveAndRunUntilMonad;
   run: () => CallEffect;
 };
 
-type RunWhenDefinition<S> = {
-  saga: (state: S) => IterableIterator<any>,
-  condition: (oldState: S, newState: S) => boolean;
-  until: (state: S) => boolean;
+type RunWhenDefinitionCommon<StateType> = {
+  condition: (oldState: StateType, newState: StateType) => boolean;
+  until: (state: StateType) => boolean;
 };
+
+type RunWhenNoArgDefinition<StateType> = RunWhenDefinitionCommon<StateType> & {
+  saga: () => IterableIterator<any>;
+};
+
+type RunWhenWithArgsDefinition<StateType, SagaArgType> = RunWhenDefinitionCommon<StateType> & {
+  args: (oldState: StateType, newState: StateType) => SagaArgType;
+};
+
+type RunWhenWithArgsAndSagaDefinition<StateType, SagaArgType> = RunWhenWithArgsDefinition<StateType, SagaArgType> & {
+  saga: (arg: SagaArgType) => IterableIterator<any>;
+};
+
+type RunWhenDefinition<StateType, SagaArgType> = RunWhenNoArgDefinition<StateType> | RunWhenWithArgsAndSagaDefinition<StateType, SagaArgType>;
 
 /**
  * Runs a saga every time the when criteria is satisfied.
  */
-export function observeAndRun<S>() {
+export function observeAndRun<StateType>(): ObserveAndRunMonad<StateType> {
+  const initialDefinition = {
+    condition: function() { return false; },
+    until: () => false,
+  };
+
   return {
-    saga: sagaPartial<S>({
-      saga: function*() { yield null; },
-      condition: function() { return false; },
-      until: _ => false
-    })
+    saga: sagaNoArgsPartial<StateType>(initialDefinition),
+    args: argsPartial<StateType>(initialDefinition)
   };
 }
 
-function sagaPartial<S>(definition: RunWhenDefinition<S>) {
-  return function(saga: () => IterableIterator<any>): ObserveAndRunSagaMonad<S> {
+function argsPartial<StateType>(definition: RunWhenDefinitionCommon<StateType>) {
+  return function<SagaArgType>(args: (oldState: StateType, newState: StateType) => SagaArgType): ObserveAndRunArgsMonad<StateType, SagaArgType> {
+    const newDefinition: RunWhenWithArgsDefinition<StateType, SagaArgType> = {
+      ...definition,
+      args: args
+    };
+
+    const saga = sagaWithArgPartial<StateType, SagaArgType>(newDefinition);
+
+    const returnVal: ObserveAndRunArgsMonad<StateType, SagaArgType> = {
+      saga: saga
+    };
+
+    return returnVal;
+  };
+}
+
+function sagaWithArgPartial<StateType, SagaArgType>(definition: RunWhenWithArgsDefinition<StateType, SagaArgType>) {
+  return function(saga: (arg: SagaArgType) => IterableIterator<any>): ObserveAndRunSagaMonad<StateType> {
+    const newDefinition: RunWhenWithArgsAndSagaDefinition<StateType, SagaArgType> = {
+      ...definition,
+      saga
+    };
+
+    const when = whenPartial(newDefinition);
+
     return {
-      when: whenPartial<S>({
+      when: when
+    };
+  }
+}
+
+function sagaNoArgsPartial<StateType>(definition: RunWhenDefinitionCommon<StateType>) {
+  return function(saga: () => IterableIterator<any>): ObserveAndRunSagaMonad<StateType> {
+    return {
+      // It's fine for downstream monads to lose the saga type information in this case because the user has already
+      // assigned the callback and it will never be used again.
+      when: whenPartial<StateType, never>({
         ...definition,
         saga
       })
@@ -60,24 +114,24 @@ function sagaPartial<S>(definition: RunWhenDefinition<S>) {
   }
 }
 
-function whenPartial<S>(definition: RunWhenDefinition<S>) {
-  return function(condition: (oldState: S, newState: S) => boolean): ObserveAndRunWhenMonad<S> {
+function whenPartial<StateType, SagaArgType>(definition: RunWhenDefinition<StateType, SagaArgType>) {
+  return function(condition: (oldState: StateType, newState: StateType) => boolean): ObserveAndRunWhenMonad<StateType> {
     const newDefinition = {
       ...definition,
       condition
     };
 
     return {
-      run: runPartial<S>(newDefinition),
-      until: untilPartial<S>(newDefinition)
+      run: runPartial<StateType, SagaArgType>(newDefinition),
+      until: untilPartial<StateType, SagaArgType>(newDefinition)
     };
   }
 }
 
-function untilPartial<S>(definition: RunWhenDefinition<S>) {
-  return function(until: (state: S) => boolean) {
+function untilPartial<StateType, SagaArgType>(definition: RunWhenDefinition<StateType, SagaArgType>) {
+  return function(until: (state: StateType) => boolean) {
     return {
-      run: runPartial<S>({
+      run: runPartial<StateType, SagaArgType>({
         ...definition,
         until
       })
@@ -85,14 +139,14 @@ function untilPartial<S>(definition: RunWhenDefinition<S>) {
   };
 }
 
-function runPartial<S>(definition: RunWhenDefinition<S>) {
+function runPartial<StateType, SagaArgType>(definition: RunWhenDefinition<StateType, SagaArgType>) {
   return function () {
     return call(runInternal, definition);
   };
 }
 
-function* runInternal<S>(definition: RunWhenDefinition<S>): IterableIterator<ActionChannelEffect | ForkEffect | SelectEffect | TakeEffect> {
-  let previousState: S = yield select(state => state);
+function* runInternal<StateType, SagaArgType>(definition: RunWhenDefinition<StateType, SagaArgType>): IterableIterator<ActionChannelEffect | ForkEffect | SelectEffect | TakeEffect> {
+  let previousState: StateType = yield select(state => state);
 
   // We need to observe every action to guarantee the observer will detect all state changes.
   // This means we have to eventually process actions even while other sagas are blocked; hence
@@ -100,7 +154,7 @@ function* runInternal<S>(definition: RunWhenDefinition<S>): IterableIterator<Act
   const channel = yield actionChannel('*', buffers.expanding<Action>(100));
 
   while(true) {
-    const currentState: S = yield select(state => state);
+    const currentState: StateType = yield select(state => state);
 
     if (definition.until(currentState)) {
       return;
@@ -110,7 +164,12 @@ function* runInternal<S>(definition: RunWhenDefinition<S>): IterableIterator<Act
       currentState != previousState &&
       definition.condition(previousState, currentState)
     ) {
-      yield fork(definition.saga, previousState);
+      if (definitionHasArgs(definition)) {
+        yield fork(definition.saga, definition.args(previousState, currentState));
+      } else {
+        yield fork(definition.saga);
+      }
+
     }
 
     previousState = currentState;
@@ -119,3 +178,8 @@ function* runInternal<S>(definition: RunWhenDefinition<S>): IterableIterator<Act
   }
 }
 
+function definitionHasArgs<StateType, SagaArgType>(
+  definition: RunWhenDefinition<StateType, SagaArgType>
+): definition is RunWhenWithArgsAndSagaDefinition<StateType, SagaArgType> {
+  return 'args' in definition;
+}

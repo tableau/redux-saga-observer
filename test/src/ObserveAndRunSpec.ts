@@ -159,4 +159,63 @@ describe('observeAndRun', () => {
       .catch(error => fail(error))
       .then(_ => done());
   });
+
+  it('Should receive arguments if specified', async () => {
+    let sagaCalled = false;
+
+    function* saga() {
+      yield observeAndRun<State>()
+        .args((_oldState, newState) => newState.val)
+        .saga(function*(val: number) {
+          expect(val).toBe(2);
+          sagaCalled = true;
+          yield 5;
+        })
+        .when((_oldState, newState) => newState.val === 2)
+        .until(state => state.val === 3)
+        .run();
+    }
+
+    const initialState = {
+      val: 0
+    };
+
+    await expectSaga(saga)
+      .withReducer(reducer, initialState)
+      .dispatch({type: 'increment'})
+      .dispatch({type: 'increment'})
+      .dispatch({type: 'increment'})
+      .run(false);
+
+    expect(sagaCalled).toBe(true);
+  });
+
+  it('Should not receive arguments if not specified', async () => {
+    let sagaCalled = false;
+
+    function* saga() {
+      yield observeAndRun<State>()
+        .saga(function*() {
+          expect(arguments.length).toBe(0);
+          sagaCalled = true;
+          yield 5;
+        })
+        .when((_oldState, newState) => newState.val === 2)
+        .until(state => state.val === 3)
+        .run();
+    }
+
+    const initialState = {
+      val: 0
+    };
+
+    await expectSaga(saga)
+      .withReducer(reducer, initialState)
+      .dispatch({type: 'increment'})
+      .dispatch({type: 'increment'})
+      .dispatch({type: 'increment'})
+      .run(false);
+
+    expect(sagaCalled).toBe(true);
+  });
 });
