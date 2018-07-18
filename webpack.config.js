@@ -5,7 +5,7 @@ module.exports = {
 
   mode: 'development',
 
-  entry: path.resolve(__dirname, 'src', 'Index.ts'),
+  entry: path.resolve(__dirname, 'src', 'index.ts'),
 
   output: {
     path: path.resolve(__dirname, 'lib'),
