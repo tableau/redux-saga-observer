@@ -1,9 +1,9 @@
 {
   "name": "redux-saga-observer",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Contains redux sagas that operate on state change rather than actions",
   "main": "index.js",
-  "typings": "src/types/index.d.ts",
+  "typings": "./src/types/index.d.ts",
   "scripts": {
     "setup": "yarn install",
     "test": "karma start test/karma.conf.js --single-run",
@@ -25,6 +25,7 @@
     "redux": "3.5.0",
     "redux-saga": "0.16.0",
     "redux-saga-test-plan": "3.7.0",
+    "typescript": "2.9.2",
     "ts-loader": "4.3.1",
     "webpack": "4.11.1",
     "webpack-command": "0.2.1"
