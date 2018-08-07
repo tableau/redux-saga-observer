@@ -2,7 +2,7 @@
 
 ![Community Supported](https://img.shields.io/badge/Support%20Level-Community%20Supported-457387.svg)
 
-redux-saga-observer is a library that provides observer patterns to redux-sagas in powerful abstractions.
+redux-saga-observer is a library that provides observer patterns to redux-sagas, allowing powerful abstractions.
 
 * [Why redux-saga-observer?]()
     * [Dispatching on state change](#dispatching-on-state-change)
@@ -10,6 +10,7 @@ redux-saga-observer is a library that provides observer patterns to redux-sagas 
 * [Get Started](#get-started)
     * [Requirements](#requirements)
     * [Installation](#installation)
+    * [Building](#building)
 * [Contributions](#contributions)
 
 # Why redux-saga-observer?
@@ -226,6 +227,35 @@ immediately aborts when ANY invariant is violated and you get notified of EVERY 
 
 ## Installation
 Add redux-saga-observer as a dependency in your package.json.
+
+## Building
+
+### Setup
+Before any of the following tasks, you need to install dependencies:
+```
+yarn install
+```
+
+While untested, you can probably substitute npm for yarn and things will probably work.
+
+### Compilation
+```
+yarn run build
+```
+
+Output appears in lib folder
+
+### Running tests
+```
+yarn run test
+```
+
+### Debugging tests
+```
+yarn run testWatch
+```
+
+Then visit localhost:9876 in the browser of your choice.
 
 # Contributions
 Code contributions and improvements by the community are welcomed!
