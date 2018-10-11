@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Contains redux sagas that operate on state change rather than actions",
   "main": "index.js",
-  "typings": "src/index.d.ts",
+  "typings": "./src/index.d.ts",
   "scripts": {
     "test": "webpack --config test/webpack.config.js",
     "build": "webpack --config webpack.config.js"
