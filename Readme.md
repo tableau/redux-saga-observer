@@ -61,10 +61,10 @@ function reducer(state: State, action: AppendAction | RemoveAction): State {
             };
 
         case 'INIT':
-            return { 
+            return {
                 ...state,
                 name: 'horsemeat'
-                lines: [] 
+                lines: []
             }
 
         default:
@@ -74,7 +74,7 @@ function reducer(state: State, action: AppendAction | RemoveAction): State {
 
 ```
 
-In this example, we dispatch REMOVE_LINE to remove the line at an index, ADD_LINE to append to the list, and INIT to initialze an empty list. There are three ways this list can change. Now suppose I create the following saga to save the list:
+In this example, we dispatch REMOVE_LINE to remove the line at an index, ADD_LINE to append to the list, and INIT to initialize an empty list. There are three ways this list can change. Now suppose I create the following saga to save the list:
 
 ```
 type SaveAction = {
@@ -85,8 +85,8 @@ type SaveAction = {
 
 function* saveList(payload: SaveAction) {
     yield call(
-        fetch, 
-        { 
+        fetch,
+        {
             method: 'POST',
             path: '/api/list',
             data: JSON.stringify({
@@ -105,7 +105,7 @@ sagaMiddleware.run(handleSaveList);
 
 ```
 
-If we want to save after every change, the producer of SaveAction needs to know that REMOVE_LINE, INIT, and ADD_LINE are all the possible actions that can modify the document. Alternatively, you could change takeEvery to listen to these three actions, in which case it must track all the actions that can possibly modify your document. Either quickly becomes unwieldy as actions distribute across your app; all developers need to remember to update the list of actions anytime they add a new action for manipulating the doc. Observers let you monitor state and dispatch a Saga when when the document changes regardless of the action that triggered it.
+If we want to save after every change, the producer of SaveAction needs to know that REMOVE_LINE, INIT, and ADD_LINE are all the possible actions that can modify the document. Alternatively, you could change takeEvery to listen to these three actions, in which case it must track all the actions that can possibly modify your document. Either quickly becomes unwieldy as actions distribute across your app; all developers need to remember to update the list of actions anytime they add a new action for manipulating the doc. Observers let you monitor state and dispatch a Saga when the document changes regardless of the action that triggered it.
 
 In redux-saga-observer, you can add a top level observer using observeAndRun. The above example's missing goo for translating document actions into SAVE_LIST becomes the following:
 
@@ -115,8 +115,8 @@ function* autoSave() {
     yield observeAndRun<State>()
         .saga(function* (state) {
             yield call(
-                fetch, 
-                { 
+                fetch,
+                {
                     method: 'POST',
                     path: '/api/list',
                     data: JSON.stringify({
@@ -147,8 +147,8 @@ Another pain point is managing concurrency in a saga. Consider the following cha
 
 function* saveList(payload: SaveAction) {
     yield call(
-        fetch, 
-        { 
+        fetch,
+        {
             method: 'POST',
             path: '/api/list',
             data: JSON.stringify({
@@ -162,27 +162,27 @@ function* saveList(payload: SaveAction) {
     if (payload.name !== yield Select(getName) || payload.list !== yield Select(getLines)) {
         return
     }
-        
+
     const res1 = yield call(someAsyncThing);
 
     // Check that the user hasn't modified the document while we were doing someAsyncThing.
     if (payload.name !== yield Select(getName) || payload.list !== yield Select(getLines)) {
         return
     }
-        
+
     const res2 = yield call(someOtherAsyncThing, res1);
-    
+
     // Check that the user hasn't modified the document while we were doing someOtherAsyncThing.
     if (payload.name !== yield Select(getName) || payload.list !== yield Select(getLines)) {
         return
     }
-    
+
     yield put({ type: 'SOME_ACTION', result: res2 });
 }
 
 ```
 
-takeLatest can sometimes aleviate all the state checks, but in complex systems this isn't always the case in sufficiently complex apps. With redux-saga-observer, you can put invariants on your saga. If the invariants are ever violated, the saga aborts and you get notified if you need to perform cleanup:
+takeLatest can sometimes alleviate all the state checks, but in complex systems this isn't always the case in sufficiently complex apps. With redux-saga-observer, you can put invariants on your saga. If the invariants are ever violated, the saga aborts and you get notified if you need to perform cleanup:
 
 ```
 
@@ -190,8 +190,8 @@ function* saveList(payload: SaveAction) {
     yield runWhile<State>()
         .saga(function* () {
             yield call(
-                fetch, 
-                { 
+                fetch,
+                {
                     method: 'POST',
                     path: '/api/list',
                     data: JSON.stringify({
@@ -200,7 +200,7 @@ function* saveList(payload: SaveAction) {
                     })
                 }
             );
-                
+
             const res1 = yield call(someAsyncThing);
             const res2 = yield call(someOtherAsyncThing, res1);
             yield put({ type: 'SOME_ACTION', result: res2 });
@@ -261,4 +261,4 @@ Then visit localhost:9876 in the browser of your choice.
 Code contributions and improvements by the community are welcomed!
 See the LICENSE file for current open-source licensing and use information.
 
-Before we can accept pull requests from contributors, we require a signed [Contributor License Agreement (CLA)](http://tableau.github.io/contributing.html),
+Before we can accept pull requests from contributors, we require a signed [Contributor License Agreement (CLA)](http://tableau.github.io/contributing.html)
