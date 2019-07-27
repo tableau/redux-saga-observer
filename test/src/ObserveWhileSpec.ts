@@ -16,14 +16,14 @@ describe('ObserveWhile', () => {
     yield observeWhile<State>(s => s.val < 40);
   }
 
-  const reducer = (state: State, action: Action) => {
+  const reducer = (state: State | undefined, action: Action) => {
     if (action.type === 'setVal') {
       return {
         ...state,
         val: (action as MyAction).val
       }
     } else {
-      return state;
+      return state != null ? state : { val: 0 };
     }
   }
 
@@ -43,7 +43,7 @@ describe('ObserveWhile', () => {
 
         expect(state.val).toBe(45);
       })
-      .catch(err => {
+      .catch((err: any) => {
         fail(err);
       })
       .then(_ => done());
@@ -65,7 +65,7 @@ describe('ObserveWhile', () => {
 
         expect(state.val).toBe(60);
       })
-      .catch(err => {
+      .catch((err: any) => {
         fail(err);
       })
       .then(_ => done());

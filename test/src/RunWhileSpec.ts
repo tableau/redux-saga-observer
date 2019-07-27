@@ -18,7 +18,11 @@ describe('RunWhile', () => {
     val: number
   };
 
-  const reducer = (state: State, action: Action) => {
+  const reducer = (state: State | undefined, action: Action) => {
+    if (state == null) {
+      return { val1: 0, val2: 0 };
+    }
+
     if (action.type === 'setVal1') {
       return {
         ...state,

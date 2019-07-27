@@ -141,7 +141,7 @@ function untilPartial<StateType, SagaArgType>(definition: RunWhenDefinition<Stat
 
 function runPartial<StateType, SagaArgType>(definition: RunWhenDefinition<StateType, SagaArgType>) {
   return function () {
-    return call(runInternal, definition);
+    return call(runInternal, definition as any);
   };
 }
 

@@ -9,7 +9,11 @@ describe('observeAndRun', () => {
     val: number,
   };
 
-  const reducer = (state: State, action: Action) => {
+  const reducer = (state: State | undefined, action: Action) => {
+    if (state == null) {
+      return { val: 0 };
+    }
+
     if (action.type === 'increment') {
       return {
         ...state,

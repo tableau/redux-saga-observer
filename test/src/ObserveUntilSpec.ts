@@ -16,14 +16,14 @@ describe('ObserveUntil', () => {
     yield observeUntil<State>(s => s.val > 40);
   }
 
-  const reducer = (state: State, action: Action) => {
+  const reducer = (state: State | undefined, action: Action) => {
     if (action.type === 'setVal') {
       return {
         ...state,
         val: (action as MyAction).val
       }
     } else {
-      return state;
+      return state != null ? state : { val: 0 };
     }
   }
 

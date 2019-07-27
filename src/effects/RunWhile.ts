@@ -21,7 +21,7 @@ export type RunWhileSagaMonad<S> = {
    * You may not use '@@Saga' or a tag on another invariant call.
    * @param tag
    */
-  invariant: <NewI extends string>(tag: NewI, clause: (s: S) => boolean) => RunWhileInvariantMonad<S, NewI>,
+  invariant: <NewI extends string>(tag: ValidateTag<never, NewI>, clause: (s: S) => boolean) => RunWhileInvariantMonad<S, NewI>,
 };
 
 export type RunWhileInvariantMonad<S, I extends string> = {
@@ -30,7 +30,7 @@ export type RunWhileInvariantMonad<S, I extends string> = {
    * You may not use '@@Saga' or a tag on another invariant call.
    * @param tag
    */
-  invariant: <NewI extends string>(tag: NewI, clause: (s: S) => boolean) => RunWhileInvariantMonad<S, I | NewI>,
+  invariant: <NewI extends string>(tag: ValidateTag<I, NewI>, clause: (s: S) => boolean) => RunWhileInvariantMonad<S, I | NewI>,
 
   /**
    * Add a callback that gets called if any of the invariants get violated. These are called in the order they're added
@@ -61,10 +61,16 @@ type Invariant<S, I extends string> = {
   clause: (s: S) => boolean
 };
 
-type RunWhileDefinition<S, I extends string> = {
-  invariants: Invariant<S, I>[],
+type RunWhileDefinition<S, I extends string> = RunWhileInvariantDefinition<S, I> & {
   onViolationCallbacks: ((s: S, tag: I[]) => IterableIterator<any>)[],
+};
+
+type RunWhileInvariantDefinition<S, I extends string> = {
+  invariants: Invariant<S, I>[],
   saga: () => IterableIterator<any>
+}
+
+type ErrorBrand<T extends string> = T & {
 };
 
 const sagaRaceTag = '@@Saga';
@@ -74,104 +80,114 @@ const sagaRaceTag = '@@Saga';
  * @param saga The saga to guard.
  */
 export function runWhile<S>(): RunWhileMonad<S> {
-  const definition: RunWhileDefinition<S, never> = {
+  const definition: RunWhileInvariantDefinition<S, never> = {
     saga: function* nothing() { yield 0; },
     invariants: [],
-    onViolationCallbacks: []
   };
 
   return {
-    saga: saga.bind(definition) // Can probably accomplish this with partial application rather than abusing 'this'.
+    saga: sagaPartial(definition),
   };
 }
 
-function saga<S>(this: RunWhileDefinition<S, never>, saga: () => IterableIterator<any>): RunWhileSagaMonad<S> {
-  const definition = {
-    ...this,
-    saga
-  };
+function sagaPartial<S>(definition: RunWhileInvariantDefinition<S, never>): (saga: () => IterableIterator<any>) => RunWhileSagaMonad<S> {
+  return (saga: () => IterableIterator<any>) => {
+    const newDefinition = {
+      ...definition,
+      saga
+    };
 
-  return {
-    run: run.bind(definition),
-    invariant: invariant.bind(definition)
-  };
-}
+    const result: RunWhileSagaMonad<S> = {
+      run: runPartial({...newDefinition, onViolationCallbacks: []}),
+      invariant: invariantPartial(newDefinition),
+    };
 
-function invariant<S, I extends string, NewI extends string>(
-  this: RunWhileDefinition<S, I | NewI>,
-  tag: NewI, clause: (s: S) => boolean
-): RunWhileInvariantMonad<S, I | NewI> {
-  if (tag === sagaRaceTag) {
-    throw new Error(`${tag} is reserved. Please choose another invariant tag.`);
+    return result;
   }
+}
 
-  // Enforce at runtime what our typesystem can't guarantee: that you only have
-  // one of any given tag.
-  if (this.invariants.some(invariant => invariant.tag as I | NewI === tag)) {
-    throw new Error(`${tag} is a`);
+type DuplicateTagError = ErrorBrand<'Duplicate invariant'>;
+type ReservedTagError = ErrorBrand<'@@Saga is a reserved tag.'>;
+
+type AssertUniqueTag<I, NewI> = [NewI] extends [I] ? DuplicateTagError : NewI;
+type AssertNonReservedTag<NewI> = [NewI] extends [typeof sagaRaceTag] ? ReservedTagError : NewI;
+
+type ValidateTag<I, NewI> = AssertUniqueTag<I, AssertNonReservedTag<NewI>>;
+
+function invariantPartial<S, I extends string>(
+  definition: RunWhileInvariantDefinition<S, I>
+) : <NewI extends string>(tag: ValidateTag<I, NewI>, clause: (s: S) => boolean) => RunWhileInvariantMonad<S, I | NewI> {
+  return <NewI extends string>(tag: ValidateTag<I, NewI>, clause: (s: S) => boolean) => {
+    const newDefinition: RunWhileInvariantDefinition<S, I | NewI> = {
+      ...definition,
+      invariants: [
+        // The tag type in the old definition of the invariants aren't assignable to the new types.
+        ...definition.invariants as any,
+        {
+          tag,
+          clause
+        }
+      ],
+    };
+
+    const result: RunWhileInvariantMonad<S, I | NewI> = {
+      invariant: invariantPartial(newDefinition),
+      onViolation: onViolationPartial({...newDefinition, onViolationCallbacks: []})
+    };
+
+    return result;
   }
+}
 
-  const definition: RunWhileDefinition<S, I | NewI> = {
-    ...this,
-    invariants: [
-      ...this.invariants,
-      {
-        tag,
-        clause
-      }
-    ]
-  };
+function onViolationPartial<S, I extends string>(
+  definition: RunWhileDefinition<S, I>
+): (callback: (state: S, invariants: I[]) => IterableIterator<any>) => RunWhileOnViolationMonad<S, I> {
+  return (callback: (state: S, invariants: I[]) => IterableIterator<any>) => {
+    const newDefinition: RunWhileDefinition<S, I> = {
+      ...definition,
+      onViolationCallbacks: [ ...definition.onViolationCallbacks, callback ]
+    }
 
-  return {
-    invariant: invariant.bind(definition),
-    onViolation: onViolation.bind(definition)
+    const result: RunWhileOnViolationMonad<S, I> = {
+      onViolation: onViolationPartial(newDefinition),
+      run: runPartial(newDefinition)
+    };
+
+    return result;
   };
 }
 
-function onViolation<S, I extends string>(
-  this: RunWhileDefinition<S, I>,
-  callback: (s: S) => IterableIterator<any>
-): RunWhileOnViolationMonad<S, I> {
-  const definition: RunWhileDefinition<S, I> = {
-    ...this,
-    onViolationCallbacks: [ ...this.onViolationCallbacks, callback ]
+function runPartial<S, I extends string>(definition: RunWhileDefinition<S, I>): () => CallEffect {
+  return () => {
+    return call(runInternal, definition as any);
   }
-
-  return {
-    onViolation: onViolation.bind(definition),
-    run: run.bind(definition)
-  };
-}
-
-function run<S, I extends string>(this: RunWhileDefinition<S, I>): CallEffect {
-  return call(runInternal.bind(this));
 }
 
 function* runInternal<S, I extends string>(
-  this: RunWhileDefinition<S, I>
-): IterableIterator<CallEffect | RaceEffect | SelectEffect> {
+  definition: RunWhileDefinition<S, I>
+): IterableIterator<CallEffect | RaceEffect<any> | SelectEffect> {
   let raceDefinition = {
-    [sagaRaceTag]: call(this.saga),
+    [sagaRaceTag]: call(definition.saga),
   };
 
-  this.invariants.forEach(invariant => {
+  definition.invariants.forEach(invariant => {
     raceDefinition = {
       ...raceDefinition,
-      [invariant.tag as string]: call(observeWhile, invariant.clause)
+      [invariant.tag as string]: call(observeWhile, invariant.clause as any)
     }
   });
 
   const raceResults = yield race(raceDefinition);
 
   // If an invariant was violated, call each onViolation with the set of violations
-  if(this.invariants.some(invariant => invariant.tag in raceResults)) {
+  if(definition.invariants.some(invariant => invariant.tag in raceResults)) {
     const currentState: S = yield select(state => state);
 
-    const violations = this.invariants
+    const violations = definition.invariants
       .filter(invariant => !invariant.clause(currentState))
       .map(invariant => invariant.tag);
 
-    for (const callback of this.onViolationCallbacks) {
+    for (const callback of definition.onViolationCallbacks) {
       yield call(callback, currentState, violations);
     };
   }
